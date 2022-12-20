@@ -3,14 +3,19 @@ declare(strict_types=1);
 
 namespace JelmerD\FileExplorer\Utility;
 
+use Cake\Http\Exception\ForbiddenException;
 use Cake\I18n\FrozenTime;
 
 class Explorer
 {
     protected $_basePath = null;
 
-    protected $_blacklist = [
+    protected $_hidden = [
         '.', '..'
+    ];
+
+    protected $_blacklist = [
+        './', '..'
     ];
 
     public function __construct(string $basePath)
@@ -20,13 +25,16 @@ class Explorer
 
     public function getFiles(string $path = null): array
     {
+        foreach ($this->_blacklist as $bl) {
+            if (str_contains($path, $bl)) throw new ForbiddenException(' Some paths are not allowed you cheeky bastard');
+        }
         $dh = opendir($this->_basePath . $path);
 
         $files = [];
 
         while (($file = readdir($dh)) !== false) {
             $fullPath = $this->_basePath . $path . $file;
-            if (in_array($file, $this->_blacklist)) continue;
+            if (in_array($file, $this->_hidden)) continue;
 
             $filetype = filetype($fullPath);
 
